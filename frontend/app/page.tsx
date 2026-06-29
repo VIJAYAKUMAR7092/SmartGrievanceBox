@@ -1,129 +1,103 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import Sidebar from "./components/Sidebar";
 
-interface Complaint {
-  id: number;
-  title: string;
-  status: string;
-  rating?: number; // ⭐ optional rating
+interface Complaint { id: number; title: string; category: string; status: string; rating?: number; }
+
+const catColors: Record<string,string> = { hostel:"cat-hostel", lab:"cat-lab", admin:"cat-admin" };
+const catIcons:  Record<string,string> = { hostel:"🏠", lab:"🖥️", admin:"📁" };
+const catBg:     Record<string,string> = { hostel:"rgba(99,102,241,0.15)", lab:"rgba(245,158,11,0.15)", admin:"rgba(16,185,129,0.15)" };
+
+function StatusPill({ status }: { status: string }) {
+  if (status === "Pending")     return <span className="pill pill-pending"><span className="dot"/>Pending</span>;
+  if (status === "In Progress") return <span className="pill pill-progress">⟳ In Progress</span>;
+  return <span className="pill pill-resolved">✓ Resolved</span>;
 }
 
 export default function HomePage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [toast, setToast] = useState("");
+  const [error, setError] = useState("");
 
-  // ✅ Fetch complaints
   const fetchComplaints = async () => {
     try {
       const res = await axios.get("http://127.0.0.1:8000/api/complaints/");
       setComplaints(res.data);
+      setError("");
     } catch (err) {
-      console.log("Failed to fetch complaints");
+      console.error(err);
+      setError("Unable to load complaints. Please start the backend server.");
     }
   };
 
-  // ❌ Delete complaint
   const deleteComplaint = async (id: number) => {
-    try {
-      await axios.delete(`http://127.0.0.1:8000/api/complaints/${id}/`);
-      fetchComplaints();
-    } catch (err) {
-      console.log("Failed to delete complaint");
-    }
+    try { await axios.delete(`http://127.0.0.1:8000/api/complaints/${id}/`); fetchComplaints(); showToast("🗑️ Complaint deleted"); }
+    catch { console.log("Failed"); }
   };
 
-  // ⭐ Update rating
   const updateRating = async (id: number, rating: number) => {
-    try {
-      await axios.patch(`http://127.0.0.1:8000/api/complaints/${id}/`, { rating });
-      fetchComplaints();
-    } catch (err) {
-      console.log("Failed to update rating");
-    }
+    try { await axios.patch(`http://127.0.0.1:8000/api/complaints/${id}/`, { rating }); fetchComplaints(); showToast("⭐ Rating updated!"); }
+    catch { console.log("Failed"); }
   };
 
-  useEffect(() => {
-    fetchComplaints();
-  }, []);
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2800); };
+  useEffect(() => { fetchComplaints(); }, []);
+
+  const pending    = complaints.filter(c => c.status === "Pending").length;
+  const inProgress = complaints.filter(c => c.status === "In Progress").length;
+  const resolved   = complaints.filter(c => c.status === "Resolved").length;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">
-        Smart Grievance Box
-      </h1>
+    <>
+      <Sidebar />
+      <main className="main-content">
+        <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div><h1>Dashboard</h1><p>Overview of all grievances in the system</p></div>
+          <Link href="/new-complaint" className="btn btn-primary">✏️ New Complaint</Link>
+        </div>
 
-      {/* Submit Button */}
-      <div className="text-center mb-6">
-        <Link href="/new-complaint">
-          <button
-            type="button"
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            Submit New Complaint
-          </button>
-        </Link>
-      </div>
+        <div className="stats-row">
+          <div className="stat-card pending">  <div className="stat-value" style={{color:"#FB7185"}}>{pending}</div>    <div className="stat-label">Pending</div></div>
+          <div className="stat-card progress"> <div className="stat-value" style={{color:"#FB923C"}}>{inProgress}</div> <div className="stat-label">In Progress</div></div>
+          <div className="stat-card resolved"> <div className="stat-value" style={{color:"#34D399"}}>{resolved}</div>   <div className="stat-label">Resolved</div></div>
+        </div>
 
-      {/* Complaints List */}
-      <div className="max-w-xl mx-auto bg-white shadow-md rounded-lg p-4">
-        <h2 className="text-xl font-semibold mb-4">Recent Complaints</h2>
-
-        {complaints.length === 0 ? (
-          <p className="text-gray-500">No complaints submitted yet.</p>
-        ) : (
-          complaints.map((c) => (
-            <div
-              key={c.id}
-              className="border-b py-3 last:border-none flex flex-col gap-2"
-            >
-              {/* Title + Status + Delete */}
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="block font-medium">{c.title}</span>
-                  <span
-                    className={
-                      c.status === "Pending"
-                        ? "text-red-500"
-                        : c.status === "In Progress"
-                        ? "text-orange-500"
-                        : "text-green-600"
-                    }
-                  >
-                    {c.status}
-                  </span>
+        <div className="card">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
+            <h2 style={{margin:0,fontSize:"16px",fontWeight:700}}>
+              Recent Complaints <span style={{marginLeft:"8px",fontSize:"12px",color:"var(--slate)",fontWeight:500}}>{complaints.length} total</span>
+            </h2>
+          </div>
+          {error ? (
+            <div className="empty-state"><div className="empty-icon">⚠️</div><div className="empty-title">Unable to load complaints</div><div className="empty-desc">{error}</div></div>
+          ) : complaints.length === 0 ? (
+            <div className="empty-state"><div className="empty-icon">📭</div><div className="empty-title">No complaints yet</div><div className="empty-desc">When students submit complaints, they'll appear here.</div></div>
+          ) : complaints.map(c => (
+            <div key={c.id} className="complaint-item">
+              <div className="complaint-avatar" style={{background: catBg[c.category] || "rgba(99,102,241,0.15)"}}>{catIcons[c.category] || "📄"}</div>
+              <div className="complaint-body">
+                <div className="complaint-title">{c.title}</div>
+                <div className="complaint-meta" style={{display:"flex",alignItems:"center",gap:"8px",marginTop:"4px"}}>
+                  <span className={`cat-badge ${catColors[c.category]||""}`}>{c.category}</span>
+                  <StatusPill status={c.status}/>
+                  {c.status === "Resolved" && c.rating && <span style={{color:"var(--amber)",fontSize:"12px"}}>{"⭐".repeat(c.rating)}</span>}
                 </div>
-                <button
-                  onClick={() => deleteComplaint(c.id)}
-                  className="px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-800"
-                >
-                  Delete
-                </button>
+                {c.status === "Resolved" && (
+                  <div style={{display:"flex",gap:"2px",marginTop:"8px"}}>
+                    {[1,2,3,4,5].map(r => (
+                      <button key={r} onClick={() => updateRating(c.id,r)} className={`star-btn ${c.rating && r<=c.rating?"filled":""}`}>★</button>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              {/* ⭐ Rating only for Resolved */}
-              {c.status === "Resolved" && (
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => updateRating(c.id, r)}
-                      className={`px-2 py-1 rounded text-white ${
-                        c.rating === r
-                          ? "bg-yellow-600"
-                          : "bg-yellow-400 hover:bg-yellow-500"
-                      }`}
-                    >
-                      {r}⭐
-                    </button>
-                  ))}
-                </div>
-              )}
+              <button onClick={() => deleteComplaint(c.id)} className="btn btn-ghost btn-sm">🗑️</button>
             </div>
-          ))
-        )}
-      </div>
-    </div>
+          ))}
+        </div>
+      </main>
+      {toast && <div className="toast">{toast}</div>}
+    </>
   );
 }
