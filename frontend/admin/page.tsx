@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated, isAdmin } from "../lib/auth";
@@ -19,8 +19,11 @@ export default function AdminRootPage() {
   }, [router]);
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-navy text-center px-4">
-      <div className="text-xl font-bold text-white">Redirecting to admin area...</div>
+    <main className="main-content">
+      <div className="page-header">
+        <h1>Admin Area</h1>
+        <p>Redirecting to the admin dashboard…</p>
+      </div>
     </main>
   );
 }

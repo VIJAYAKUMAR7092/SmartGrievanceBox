@@ -18,6 +18,13 @@ class Complaint(models.Model):
     description = models.TextField()
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="Pending")
     assigned_to = models.CharField(max_length=100, blank=True)  # Auto-assign field
+    user = models.ForeignKey(
+        'auth.User',
+        related_name='complaints',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     # ⭐ Rating optional, until student gives feedback
     rating = models.IntegerField(null=True, blank=True)  

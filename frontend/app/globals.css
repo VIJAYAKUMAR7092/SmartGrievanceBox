@@ -1,15 +1,51 @@
 @import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --color-navy: #0B1120;
+  --color-navy-light: #151F32;
+  --color-navy-card: #1E293B;
+  --color-indigo: #6366F1;
+  --color-indigo-light: #818CF8;
+  --color-slate-400: #94A3B8;
+  --color-slate-300: #CBD5E1;
+  --color-brand: #38BDF8;
+}
 
-/* Force Tailwind to include button colors */
+@layer base {
+  :root {
+    --background: #0B1120;
+    --foreground: #F8FAFC;
+    --card: #151F32;
+    --card-foreground: #F8FAFC;
+    --border: rgba(99,102,241,0.15);
+    --primary: #6366F1;
+    --primary-foreground: #ffffff;
+    --muted: #1E293B;
+    --muted-foreground: #94A3B8;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
 @layer utilities {
-  .bg-red-500 {}
-  .bg-red-600 {}
-  .bg-orange-500 {}
-  .bg-orange-600 {}
-  .bg-green-600 {}
-  .bg-green-700 {}
+  .btn {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer text-center;
+  }
+  .btn-primary {
+    @apply bg-indigo-600 text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-500 hover:-translate-y-px;
+  }
+  .btn-ghost {
+    @apply bg-white/5 text-slate-300 hover:bg-rose-500/15 hover:text-rose-400;
+  }
 }
